@@ -33,4 +33,30 @@ describe('anecdotes', () => {
 
     expect(screen.getByText(anecdotes[4])).toBeInTheDocument()
   })
+
+  test('starts with zero votes for the displayed anecdote', () => {
+    render(<App />)
+    expect(screen.getByText('has 0 votes')).toBeInTheDocument()
+  })
+
+  test('a vote increments the vote count of the displayed anecdote', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'vote' }))
+
+    expect(screen.getByText('has 1 votes')).toBeInTheDocument()
+  })
+
+  test('votes are tracked per anecdote', async () => {
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'vote' }))
+    await user.click(screen.getByRole('button', { name: 'next anecdote' }))
+
+    expect(screen.getByText(anecdotes[4])).toBeInTheDocument()
+    expect(screen.getByText('has 0 votes')).toBeInTheDocument()
+  })
 })
