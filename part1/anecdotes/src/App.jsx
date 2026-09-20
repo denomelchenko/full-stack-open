@@ -25,13 +25,24 @@ const App = () => {
     setVotes(copy)
   }
 
+  const maxVotes = Math.max(...votes)
+  const mostVoted = votes.indexOf(maxVotes)
+
   return (
     <div>
-      <h2>Anecdote of the day</h2>
-      <p>{anecdotes[selected]}</p>
-      <p>has {votes[selected]} votes</p>
-      <button onClick={handleVote}>vote</button>
-      <button onClick={handleNext}>next anecdote</button>
+      <section aria-label="anecdote of the day">
+        <h2>Anecdote of the day</h2>
+        <p>{anecdotes[selected]}</p>
+        <p>has {votes[selected]} votes</p>
+        <button onClick={handleVote}>vote</button>
+        <button onClick={handleNext}>next anecdote</button>
+      </section>
+
+      <section aria-label="anecdote with most votes">
+        <h2>Anecdote with most votes</h2>
+        <p>{anecdotes[mostVoted]}</p>
+        <p>has {maxVotes} votes</p>
+      </section>
     </div>
   )
 }
