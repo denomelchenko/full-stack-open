@@ -30,4 +30,22 @@ describe('unicafe', () => {
     expect(screen.getByText('neutral 0')).toBeInTheDocument()
     expect(screen.getByText('bad 1')).toBeInTheDocument()
   })
+
+  test('shows total, average and positive percentage', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: 'good' }))
+    await user.click(screen.getByRole('button', { name: 'good' }))
+    await user.click(screen.getByRole('button', { name: 'neutral' }))
+    await user.click(screen.getByRole('button', { name: 'bad' }))
+
+    const total = 4
+    const average = (2 - 1) / total
+    const positive = (2 / total) * 100
+
+    expect(screen.getByText('total ' + total)).toBeInTheDocument()
+    expect(screen.getByText('average ' + average)).toBeInTheDocument()
+    expect(screen.getByText('positive ' + positive + ' %')).toBeInTheDocument()
+  })
 })
