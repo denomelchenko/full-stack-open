@@ -43,8 +43,8 @@ Each `partN/README.md` lists the exercises of that part and links to the chapter
 
 ## Progress
 
-| Part | Exercises | Range | Submitted |
-|------|-----------|-------|-----------|
+| Part | Range | Exercises | Submitted |
+|------|-------|-----------|-----------|
 | 0 | 0.1–0.6 | 6 | [ ] |
 | 1 | 1.1–1.14 | 14 | [ ] |
 | 2 | 2.1–2.20 | 20 | [ ] |
