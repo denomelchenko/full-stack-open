@@ -137,6 +137,51 @@ describe('deletion of a blog', () => {
   })
 })
 
+describe('update of a blog', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+  })
+
+  test('succeeds with 200 and the updated blog', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToUpdate = blogsAtStart[0]
+
+    const response = await api
+      .put('/api/blogs/' + blogToUpdate.id)
+      .send({
+        title: blogToUpdate.title,
+        author: blogToUpdate.author,
+        url: blogToUpdate.url,
+        likes: blogToUpdate.likes + 1,
+      })
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.likes, blogToUpdate.likes + 1)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    const updated = blogsAtEnd.find((blog) => blog.id === blogToUpdate.id)
+
+    assert.strictEqual(updated.likes, blogToUpdate.likes + 1)
+  })
+
+  test('fails with 400 if the id is malformatted', async () => {
+    const validBlog = (await helper.blogsInDb())[0]
+    const invalidId = '5a3d5da59070081a82a3445'
+
+    await api
+      .put('/api/blogs/' + invalidId)
+      .send({
+        title: validBlog.title,
+        author: validBlog.author,
+        url: validBlog.url,
+        likes: 10,
+      })
+      .expect(400)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
