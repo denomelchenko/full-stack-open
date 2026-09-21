@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import countriesService from '../services/countries'
@@ -82,5 +82,19 @@ describe('countries', () => {
     expect(screen.getByText('Finnish')).toBeInTheDocument()
     expect(screen.getByText('Swedish')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Flag of Finland' })).toBeInTheDocument()
+  })
+
+  test('opens the details of a listed country when its button is clicked', async () => {
+    const user = userEvent.setup()
+    await renderApp()
+
+    await user.type(screen.getByLabelText('find countries'), 'pan')
+
+    const japan = screen.getByText('Japan')
+    await user.click(within(japan).getByRole('button', { name: 'show' }))
+
+    expect(screen.getByRole('heading', { name: 'Japan' })).toBeInTheDocument()
+    expect(screen.getByText('capital Tokyo')).toBeInTheDocument()
+    expect(screen.queryByText('Panama')).not.toBeInTheDocument()
   })
 })

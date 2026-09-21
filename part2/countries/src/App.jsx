@@ -6,6 +6,7 @@ import CountryList from './components/CountryList'
 const App = () => {
   const [countries, setCountries] = useState([])
   const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState(null)
 
   useEffect(() => {
     countriesService.getAll().then((allCountries) => {
@@ -17,7 +18,8 @@ const App = () => {
     country.name.common.toLowerCase().includes(query.toLowerCase())
   )
 
-  const details = matches.length === 1 ? matches[0] : null
+  const details =
+    selected !== null ? selected : matches.length === 1 ? matches[0] : null
 
   return (
     <div>
@@ -26,7 +28,10 @@ const App = () => {
         <input
           id="query"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => {
+            setQuery(event.target.value)
+            setSelected(null)
+          }}
         />
       </div>
 
@@ -34,9 +39,12 @@ const App = () => {
         <p>Too many matches, specify another filter</p>
       )}
 
-      {query !== '' && matches.length > 1 && matches.length <= 10 && (
-        <CountryList countries={matches} />
-      )}
+      {query !== '' &&
+        selected === null &&
+        matches.length > 1 &&
+        matches.length <= 10 && (
+          <CountryList countries={matches} onShow={setSelected} />
+        )}
 
       {details !== null && <Country details={details} />}
     </div>
