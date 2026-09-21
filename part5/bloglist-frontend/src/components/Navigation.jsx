@@ -1,20 +1,30 @@
 import { Link } from 'react-router-dom'
+import { AppBar, Button, Toolbar } from '@mui/material'
 
 const Navigation = ({ user, onLogout }) => (
-  <div>
-    <Link to="/">blogs</Link>
-    {' | '}
-    {!user && <Link to="/login">login</Link>}
-    {user && <Link to="/blogs/new">new blog</Link>}
-    {' '}
-    {user && <span>{user.name} logged in</span>}
-    {' '}
-    {user && (
-      <button type="button" onClick={onLogout}>
-        logout
-      </button>
-    )}
-  </div>
+  <AppBar position="static">
+    <Toolbar>
+      <Button color="inherit" component={Link} to="/">
+        blogs
+      </Button>
+      {!user && (
+        <Button color="inherit" component={Link} to="/login">
+          login
+        </Button>
+      )}
+      {user && (
+        <Button color="inherit" component={Link} to="/blogs/new">
+          new blog
+        </Button>
+      )}
+      {user && <span>{user.name} logged in</span>}
+      {user && (
+        <Button color="inherit" onClick={onLogout}>
+          logout
+        </Button>
+      )}
+    </Toolbar>
+  </AppBar>
 )
 
 export default Navigation
