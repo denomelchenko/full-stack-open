@@ -156,6 +156,43 @@ describe('when there is initially one user in db', () => {
   })
 })
 
+describe('login', () => {
+  beforeEach(async () => {
+    await User.deleteMany({})
+    await User.init()
+
+    const passwordHash = await bcrypt.hash(helper.initialUsers[0].password, 10)
+    const user = new User({
+      username: helper.initialUsers[0].username,
+      name: helper.initialUsers[0].name,
+      passwordHash,
+    })
+
+    await user.save()
+  })
+
+  test('succeeds with a valid username and password', async () => {
+    const response = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'sekret' })
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
+
+    assert.notStrictEqual(response.body.token, undefined)
+    assert.strictEqual(response.body.username, 'root')
+    assert.strictEqual(response.body.name, 'Superuser')
+  })
+
+  test('fails with 401 if the password is wrong', async () => {
+    const response = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'wrong' })
+      .expect(401)
+
+    assert.strictEqual(response.body.error, 'invalid username or password')
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
