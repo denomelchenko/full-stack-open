@@ -192,6 +192,43 @@ describe('update of a blog', () => {
   })
 })
 
+describe('addition of a new blog with a token', () => {
+  let token
+
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('secret', 10)
+    const user = new User({ username: 'root', name: 'Superuser', passwordHash })
+    await user.save()
+
+    const loginResponse = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'secret' })
+
+    token = loginResponse.body.token
+  })
+
+  test('records the user of the token as the creator of the blog', async () => {
+    const newBlog = {
+      title: 'the token decides the creator',
+      author: 'Test Author',
+      url: 'https://example.com/creator',
+    }
+
+    const response = await api
+      .post('/api/blogs')
+      .set('Authorization', 'Bearer ' + token)
+      .send(newBlog)
+      .expect(201)
+
+    assert.strictEqual(response.body.user.username, 'root')
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
