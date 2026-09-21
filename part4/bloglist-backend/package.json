@@ -9,7 +9,7 @@
     "start": "node index.js",
     "start:test": "cross-env NODE_ENV=test node --watch index.js",
     "dev": "node --watch index.js",
-    "test": "cross-env NODE_ENV=test node --test",
+    "test": "cross-env NODE_ENV=test node --test --test-concurrency=1",
     "lint": "eslint ."
   },
   "dependencies": {
