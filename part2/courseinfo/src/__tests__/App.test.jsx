@@ -22,4 +22,16 @@ describe('courseinfo', () => {
     render(<App />)
     expect(screen.getByText('Total of 42 exercises')).toBeInTheDocument()
   })
+
+  test('renders every course and every course total', () => {
+    render(<App />)
+    expect(
+      screen.getByRole('heading', { name: 'Half Stack application development' })
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Node.js' })).toBeInTheDocument()
+    expect(screen.getByText('Routing 3')).toBeInTheDocument()
+    expect(screen.getByText('Middlewares 7')).toBeInTheDocument()
+    expect(screen.getByText('Total of 42 exercises')).toBeInTheDocument()
+    expect(screen.getByText('Total of 10 exercises')).toBeInTheDocument()
+  })
 })
