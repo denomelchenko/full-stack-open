@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Filter from './components/Filter'
+import Notification from './components/Notification'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import personsService from './services/persons'
@@ -9,12 +10,31 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [message, setMessage] = useState(null)
+  const [isError, setIsError] = useState(false)
 
   useEffect(() => {
     personsService.getAll().then((initialPersons) => {
       setPersons(initialPersons)
     })
   }, [])
+
+  useEffect(() => {
+    if (message === null) {
+      return undefined
+    }
+
+    const timer = setTimeout(() => {
+      setMessage(null)
+    }, 5000)
+
+    return () => clearTimeout(timer)
+  }, [message])
+
+  const notify = (text) => {
+    setIsError(false)
+    setMessage(text)
+  }
 
   const addPerson = (event) => {
     event.preventDefault()
@@ -38,6 +58,7 @@ const App = () => {
             )
             setNewName('')
             setNewNumber('')
+            notify('Updated ' + returnedPerson.name)
           })
       }
       return
@@ -52,6 +73,7 @@ const App = () => {
       setPersons(persons.concat(returnedPerson))
       setNewName('')
       setNewNumber('')
+      notify('Added ' + returnedPerson.name)
     })
   }
 
@@ -70,6 +92,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message} isError={isError} />
       <Filter
         value={filter}
         onChange={(event) => setFilter(event.target.value)}

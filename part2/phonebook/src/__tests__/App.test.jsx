@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import personsService from '../services/persons'
@@ -142,5 +142,34 @@ describe('phonebook', () => {
     expect(personsService.remove).not.toHaveBeenCalled()
     expect(screen.getByText('Arto Hellas 040-123456')).toBeInTheDocument()
     confirmSpy.mockRestore()
+  })
+
+  test('shows a notification after adding a person and hides it again', async () => {
+    vi.useFakeTimers()
+    personsService.create.mockResolvedValue({
+      name: 'Grace Hopper',
+      number: '040-999999',
+      id: '5',
+    })
+    render(<App />)
+    await act(async () => {})
+
+    fireEvent.change(screen.getByLabelText('name'), {
+      target: { value: 'Grace Hopper' },
+    })
+    fireEvent.change(screen.getByLabelText('number'), {
+      target: { value: '040-999999' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'add' }))
+    await act(async () => {})
+
+    expect(screen.getByText('Added Grace Hopper')).toBeInTheDocument()
+
+    await act(async () => {
+      vi.advanceTimersByTime(5000)
+    })
+
+    expect(screen.queryByText('Added Grace Hopper')).not.toBeInTheDocument()
+    vi.useRealTimers()
   })
 })
