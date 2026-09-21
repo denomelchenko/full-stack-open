@@ -2,9 +2,11 @@ const assert = require('node:assert')
 const { test, after, beforeEach, describe } = require('node:test')
 const mongoose = require('mongoose')
 const supertest = require('supertest')
+const bcrypt = require('bcrypt')
 const app = require('../app')
 const helper = require('./test_helper')
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 const api = supertest(app)
 
@@ -41,6 +43,12 @@ describe('addition of a new blog', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
     await Blog.insertMany(helper.initialBlogs)
+
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('secret', 10)
+    const user = new User({ username: 'root', name: 'Superuser', passwordHash })
+    await user.save()
   })
 
   test('succeeds with valid data', async () => {
@@ -51,11 +59,13 @@ describe('addition of a new blog', () => {
       likes: 5,
     }
 
-    await api
+    const response = await api
       .post('/api/blogs')
       .send(newBlog)
       .expect(201)
       .expect('Content-Type', /application\/json/)
+
+    assert.strictEqual(response.body.user.username, 'root')
 
     const blogsAtEnd = await helper.blogsInDb()
 

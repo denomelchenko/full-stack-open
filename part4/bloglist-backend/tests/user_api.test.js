@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt')
 const app = require('../app')
 const helper = require('./test_helper')
 const User = require('../models/user')
+const Blog = require('../models/blog')
 
 const api = supertest(app)
 
@@ -124,6 +125,34 @@ describe('when there is initially one user in db', () => {
 
     const usersAtEnd = await helper.usersInDb()
     assert.strictEqual(usersAtEnd.length, 1)
+  })
+
+  test('the blogs created by a user are populated in the user list', async () => {
+    const user = (await helper.usersInDb())[0]
+
+    const blog = new Blog({
+      title: 'a blog written by root',
+      author: 'Superuser',
+      url: 'https://example.com/root-blog',
+      likes: 2,
+      user: user.id,
+    })
+
+    await blog.save()
+
+    // GET /api/users populates the user's own `blogs` array, so the id has to be stored on the
+    // user document too. POST /api/blogs performs this push in the application, but this test
+    // creates the blog directly and therefore links it here.
+    const rootUser = await User.findOne({ username: 'root' })
+    rootUser.blogs = rootUser.blogs.concat(blog._id)
+    await rootUser.save()
+
+    const response = await api.get('/api/users').expect(200)
+
+    const root = response.body.find((entry) => entry.username === 'root')
+
+    assert.strictEqual(root.blogs.length, 1)
+    assert.strictEqual(root.blogs[0].title, 'a blog written by root')
   })
 })
 
