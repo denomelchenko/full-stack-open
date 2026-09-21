@@ -6,7 +6,6 @@ import BlogList from './components/BlogList'
 import LoginForm from './components/LoginForm'
 import Navigation from './components/Navigation'
 import Notification from './components/Notification'
-import Togglable from './components/Togglable'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -115,22 +114,14 @@ const App = () => {
       <Navigation user={user} onLogout={handleLogout} />
       <Notification message={notification} />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <div>
-              {user && (
-                <Togglable buttonLabel="create new blog">
-                  <BlogForm createBlog={handleCreate} />
-                </Togglable>
-              )}
-              <BlogList blogs={blogsByLikes} />
-            </div>
-          }
-        />
+        <Route path="/" element={<BlogList blogs={blogsByLikes} />} />
         <Route
           path="/login"
           element={user ? <Navigate replace to="/" /> : <LoginForm onLogin={handleLogin} />}
+        />
+        <Route
+          path="/blogs/new"
+          element={user ? <BlogForm createBlog={handleCreate} /> : <Navigate replace to="/login" />}
         />
         <Route
           path="/blogs/:id"

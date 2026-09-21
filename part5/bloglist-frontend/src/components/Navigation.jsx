@@ -5,6 +5,8 @@ const Navigation = ({ user, onLogout }) => (
     <Link to="/">blogs</Link>
     {' | '}
     {!user && <Link to="/login">login</Link>}
+    {user && <Link to="/blogs/new">new blog</Link>}
+    {' '}
     {user && <span>{user.name} logged in</span>}
     {' '}
     {user && (
