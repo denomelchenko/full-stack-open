@@ -229,6 +229,75 @@ describe('addition of a new blog with a token', () => {
   })
 })
 
+describe('deletion of a blog with a token', () => {
+  let token
+  let blogToDelete
+
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('secret', 10)
+    const user = new User({ username: 'root', name: 'Superuser', passwordHash })
+    await user.save()
+
+    const loginResponse = await api
+      .post('/api/login')
+      .send({ username: 'root', password: 'secret' })
+
+    token = loginResponse.body.token
+
+    const blog = new Blog({
+      title: 'a blog to delete',
+      author: 'Test Author',
+      url: 'https://example.com/delete-me',
+      likes: 3,
+      user: user._id,
+    })
+
+    blogToDelete = await blog.save()
+  })
+
+  test('succeeds with 204 when the creator deletes the blog', async () => {
+    await api
+      .delete('/api/blogs/' + blogToDelete.id)
+      .set('Authorization', 'Bearer ' + token)
+      .expect(204)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, 0)
+  })
+
+  test('fails with 401 if no token is provided', async () => {
+    await api.delete('/api/blogs/' + blogToDelete.id).expect(401)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, 1)
+  })
+
+  test('fails with 401 if the deleter is not the creator', async () => {
+    const otherPasswordHash = await bcrypt.hash('salainen', 10)
+    const otherUser = new User({
+      username: 'mluukkai',
+      name: 'Matti Luukkainen',
+      passwordHash: otherPasswordHash,
+    })
+    await otherUser.save()
+
+    const loginResponse = await api
+      .post('/api/login')
+      .send({ username: 'mluukkai', password: 'salainen' })
+
+    await api
+      .delete('/api/blogs/' + blogToDelete.id)
+      .set('Authorization', 'Bearer ' + loginResponse.body.token)
+      .expect(401)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, 1)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
