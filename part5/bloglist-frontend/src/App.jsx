@@ -96,6 +96,10 @@ const App = () => {
   }
 
   const handleDelete = async (blog) => {
+    if (!window.confirm('Remove blog ' + blog.title + ' by ' + blog.author)) {
+      return
+    }
+
     try {
       await blogService.remove(blog.id)
 

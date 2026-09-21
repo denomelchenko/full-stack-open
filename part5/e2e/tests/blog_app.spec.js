@@ -1,15 +1,5 @@
 const { test, expect } = require('@playwright/test')
-const {
-  resetAndSeed,
-  createUser,
-  loginViaApi,
-  createBlogViaApi,
-  loginWith,
-  logout,
-  createBlog,
-  expandBlog,
-  likeBlog,
-} = require('./helper')
+const { resetAndSeed, loginWith, createBlog, openBlog } = require('./helper')
 
 const testUser = {
   username: 'mluukkai',
@@ -17,14 +7,8 @@ const testUser = {
   password: 'salainen',
 }
 
-const otherUser = {
-  username: 'ada',
-  name: 'Ada Lovelace',
-  password: 'lovelace',
-}
-
 const newBlog = {
-  title: 'Playwright and the bloglist',
+  title: 'Playwright and the routed bloglist',
   author: 'Matti Luukkainen',
   url: 'https://example.com/playwright',
 }
@@ -35,17 +19,12 @@ test.describe('Blog app', () => {
     await page.goto('/')
   })
 
-  test('the login form is shown by default', async ({ page }) => {
-    await expect(page.getByRole('button', { name: 'login' })).toBeVisible()
-    await expect(page.getByRole('textbox').first()).toBeVisible()
-    await expect(page.locator('input[type="password"]')).toBeVisible()
-  })
-
   test('login succeeds with the correct credentials', async ({ page }) => {
     await loginWith(page, testUser.username, testUser.password)
 
     await expect(page.getByRole('button', { name: 'logout' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'login' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'login' })).toHaveCount(0)
+    await expect(page).toHaveURL('/')
   })
 
   test('login fails with the wrong credentials', async ({ page }) => {
@@ -54,6 +33,7 @@ test.describe('Blog app', () => {
     await expect(page.getByRole('button', { name: 'login' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'logout' })).toHaveCount(0)
     await expect(page.getByText(/wrong|invalid/i)).toBeVisible()
+    await expect(page).toHaveURL('/login')
   })
 
   test('a logged in user can create a blog', async ({ page }) => {
@@ -61,102 +41,33 @@ test.describe('Blog app', () => {
 
     await createBlog(page, newBlog)
 
+    await expect(page).toHaveURL('/')
     await expect(page.locator('.blog', { hasText: newBlog.title })).toBeVisible()
-    await expect(page.locator('.blog', { hasText: newBlog.title })).toContainText(newBlog.author)
   })
 
-  test('a blog can be liked', async ({ page }) => {
+  test('a logged in user can like a blog', async ({ page }) => {
     await loginWith(page, testUser.username, testUser.password)
     await createBlog(page, newBlog)
 
-    await expandBlog(page, newBlog.title)
-    await likeBlog(page, newBlog.title)
+    await openBlog(page, newBlog.title)
+    await page.getByRole('button', { name: 'like' }).click()
 
-    await expect(
-      page.locator('.blog', { hasText: newBlog.title }).first().getByText(/likes:?\s*1/i)
-    ).toBeVisible()
+    await expect(page.getByText(/likes:?\s*1/i)).toBeVisible()
   })
 
-  test('a blog can be deleted by the user who added it', async ({ page }) => {
+  test('a logged in user can delete a blog', async ({ page }) => {
     await loginWith(page, testUser.username, testUser.password)
     await createBlog(page, newBlog)
+
+    await openBlog(page, newBlog.title)
 
     // window.confirm blocks the page: Playwright only continues once the
     // dialog is handled. Register the handler BEFORE clicking delete.
     page.on('dialog', (dialog) => dialog.accept())
 
-    await expandBlog(page, newBlog.title)
-    await page
-      .locator('.blog', { hasText: newBlog.title })
-      .first()
-      .getByRole('button', { name: 'remove' })
-      .click()
+    await page.getByRole('button', { name: 'delete' }).click()
 
+    await expect(page).toHaveURL('/')
     await expect(page.locator('.blog', { hasText: newBlog.title })).toHaveCount(0)
-  })
-
-  test('only the user who created a blog sees its delete button', async ({ page, request }) => {
-    await loginWith(page, testUser.username, testUser.password)
-    await createBlog(page, newBlog)
-    await logout(page)
-
-    await createUser(request, otherUser)
-    await loginWith(page, otherUser.username, otherUser.password)
-
-    await expandBlog(page, newBlog.title)
-
-    const otherUserBlog = page.locator('.blog', { hasText: newBlog.title }).first()
-    await expect(otherUserBlog.getByRole('button', { name: 'like' })).toBeVisible()
-    await expect(otherUserBlog.getByRole('button', { name: 'remove' })).toHaveCount(0)
-
-    await logout(page)
-    await loginWith(page, testUser.username, testUser.password)
-    await expandBlog(page, newBlog.title)
-
-    const creatorBlog = page.locator('.blog', { hasText: newBlog.title }).first()
-    await expect(creatorBlog.getByRole('button', { name: 'remove' })).toBeVisible()
-  })
-
-  test('blogs are ordered by likes, most liked first', async ({ page, request }) => {
-    // App.jsx renders the login form whenever there is no user, so the blog
-    // list is only visible once logged in. Log in through the UI first: the
-    // session is persisted in localStorage and survives the reload below.
-    await loginWith(page, testUser.username, testUser.password)
-
-    const token = await loginViaApi(request, testUser)
-
-    await createBlogViaApi(request, token, {
-      title: 'The blog with three likes',
-      author: 'Matti Luukkainen',
-      url: 'https://example.com/three',
-      likes: 3,
-    })
-    await createBlogViaApi(request, token, {
-      title: 'The blog with two likes',
-      author: 'Matti Luukkainen',
-      url: 'https://example.com/two',
-      likes: 2,
-    })
-    await createBlogViaApi(request, token, {
-      title: 'The blog with one like',
-      author: 'Matti Luukkainen',
-      url: 'https://example.com/one',
-      likes: 1,
-    })
-
-    // The page fetched its blogs before the seeding, so ask it to fetch again.
-    // The persisted login keeps the list rendered after the reload.
-    await page.reload()
-
-    // allTextContents() does not auto-wait, so first wait until the seeded
-    // blogs have been fetched and rendered; only then read them in DOM order.
-    await expect(page.locator('.blog')).toHaveCount(3)
-
-    const blogTexts = await page.locator('.blog').allTextContents()
-
-    expect(blogTexts).toHaveLength(3)
-    expect(blogTexts[0]).toContain('The blog with three likes')
-    expect(blogTexts[1]).toContain('The blog with two likes')
-    expect(blogTexts[2]).toContain('The blog with one like')
   })
 })

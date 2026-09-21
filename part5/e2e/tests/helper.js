@@ -29,35 +29,9 @@ const createUser = async (request, user) => {
   return response.json()
 }
 
-// Logs in without a browser and returns the JWT. Used when a test needs known
-// data (for example exact like counts) before the page is loaded.
-const loginViaApi = async (request, { username, password }) => {
-  const response = await request.post('/api/login', { data: { username, password } })
-
-  if (!response.ok()) {
-    throw new Error('logging in through the API failed with status ' + response.status())
-  }
-
-  const body = await response.json()
-
-  return body.token
-}
-
-// Creates a blog through the API with an explicit likes value.
-const createBlogViaApi = async (request, token, blog) => {
-  const response = await request.post('/api/blogs', {
-    data: blog,
-    headers: { Authorization: 'Bearer ' + token },
-  })
-
-  if (!response.ok()) {
-    throw new Error('creating a blog through the API failed with status ' + response.status())
-  }
-
-  return response.json()
-}
-
+// The login form lives on /login, reachable from the navigation bar.
 const loginWith = async (page, username, password) => {
+  await page.getByRole('link', { name: 'login' }).click()
   await page.getByRole('textbox').first().fill(username)
   await page.locator('input[type="password"]').fill(password)
   await page.getByRole('button', { name: 'login' }).click()
@@ -67,11 +41,11 @@ const logout = async (page) => {
   await page.getByRole('button', { name: 'logout' }).click()
 }
 
-// Opens the create-blog form (exercise 5.5), fills the three fields in their
-// DOM order (title, author, url - exercise 5.6), submits, and then WAITS until
-// the new blog is rendered. The wait is the fix for the lost-item flake.
+// The create form lives on /blogs/new, reachable from the navigation bar. The
+// final wait is the fix for the lost-item flake: the form empties before the
+// server has answered and App then navigates back to the list.
 const createBlog = async (page, { title, author, url }) => {
-  await page.getByRole('button', { name: /create new blog|new blog/i }).click()
+  await page.getByRole('link', { name: 'new blog' }).click()
 
   const form = page.locator('form')
   await form.getByRole('textbox').nth(0).fill(title)
@@ -82,28 +56,9 @@ const createBlog = async (page, { title, author, url }) => {
   await page.locator('.blog', { hasText: title }).first().waitFor()
 }
 
-// The details of a blog are hidden behind the exercise 5.7 toggle. The regex
-// accepts "view"/"details" (collapsed) and "hide" (expanded).
-const expandBlog = async (page, title) => {
-  await page
-    .locator('.blog', { hasText: title })
-    .first()
-    .getByRole('button', { name: /view|details|hide/i })
-    .click()
+// The list item is a link (<title> <author>) to /blogs/:id.
+const openBlog = async (page, title) => {
+  await page.locator('.blog', { hasText: title }).first().getByRole('link').click()
 }
 
-const likeBlog = async (page, title) => {
-  await page.locator('.blog', { hasText: title }).first().getByRole('button', { name: 'like' }).click()
-}
-
-module.exports = {
-  resetAndSeed,
-  createUser,
-  loginViaApi,
-  createBlogViaApi,
-  loginWith,
-  logout,
-  createBlog,
-  expandBlog,
-  likeBlog,
-}
+module.exports = { resetAndSeed, createUser, loginWith, logout, createBlog, openBlog }
