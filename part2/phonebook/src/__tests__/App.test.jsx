@@ -44,4 +44,18 @@ describe('phonebook', () => {
     expect(screen.getByText('Ada Lovelace 12-34-5678')).toBeInTheDocument()
     expect(screen.getByLabelText('number')).toHaveValue('')
   })
+
+  test('filters the shown persons by name, case-insensitively', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByLabelText('name'), 'Ada Lovelace')
+    await user.type(screen.getByLabelText('number'), '12-34-5678')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    await user.type(screen.getByLabelText('filter shown with'), 'aRtO')
+
+    expect(screen.getByText('Arto Hellas 040-123456')).toBeInTheDocument()
+    expect(screen.queryByText('Ada Lovelace 12-34-5678')).not.toBeInTheDocument()
+  })
 })
