@@ -172,4 +172,46 @@ describe('phonebook', () => {
     expect(screen.queryByText('Added Grace Hopper')).not.toBeInTheDocument()
     vi.useRealTimers()
   })
+
+  test('shows an error when the updated person no longer exists', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    personsService.update.mockRejectedValue(
+      new Error('Request failed with status code 404')
+    )
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.type(screen.getByLabelText('number'), '040-999999')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(
+      await screen.findByText(
+        'Information of Arto Hellas has already been removed from server'
+      )
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Arto Hellas 040-123456')).not.toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  test('shows a success message when the number is replaced', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    personsService.update.mockResolvedValue({
+      name: 'Arto Hellas',
+      number: '040-999999',
+      id: '1',
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.type(screen.getByLabelText('number'), '040-999999')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(await screen.findByText('Updated Arto Hellas')).toBeInTheDocument()
+    expect(screen.getByText('Arto Hellas 040-999999')).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
 })

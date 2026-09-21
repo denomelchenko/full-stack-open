@@ -36,6 +36,11 @@ const App = () => {
     setMessage(text)
   }
 
+  const notifyError = (text) => {
+    setIsError(true)
+    setMessage(text)
+  }
+
   const addPerson = (event) => {
     event.preventDefault()
 
@@ -59,6 +64,14 @@ const App = () => {
             setNewName('')
             setNewNumber('')
             notify('Updated ' + returnedPerson.name)
+          })
+          .catch(() => {
+            notifyError(
+              'Information of ' +
+                existing.name +
+                ' has already been removed from server'
+            )
+            setPersons(persons.filter((person) => person.id !== existing.id))
           })
       }
       return
