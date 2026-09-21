@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import Blog from './components/Blog'
 import BlogForm from './components/BlogForm'
+import BlogList from './components/BlogList'
 import LoginForm from './components/LoginForm'
 import Navigation from './components/Navigation'
 import Notification from './components/Notification'
@@ -123,21 +124,19 @@ const App = () => {
                   <BlogForm createBlog={handleCreate} />
                 </Togglable>
               )}
-              {blogsByLikes.map((blog) => (
-                <Blog
-                  key={blog.id}
-                  blog={blog}
-                  user={user}
-                  handleLike={handleLike}
-                  handleDelete={handleDelete}
-                />
-              ))}
+              <BlogList blogs={blogsByLikes} />
             </div>
           }
         />
         <Route
           path="/login"
           element={user ? <Navigate replace to="/" /> : <LoginForm onLogin={handleLogin} />}
+        />
+        <Route
+          path="/blogs/:id"
+          element={
+            <Blog blogs={blogs} user={user} handleLike={handleLike} handleDelete={handleDelete} />
+          }
         />
       </Routes>
     </div>
