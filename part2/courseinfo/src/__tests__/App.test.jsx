@@ -17,4 +17,9 @@ describe('courseinfo', () => {
     expect(screen.getByText('State of a component 14')).toBeInTheDocument()
     expect(screen.getByText('Redux 11')).toBeInTheDocument()
   })
+
+  test('shows the total number of exercises', () => {
+    render(<App />)
+    expect(screen.getByText('Total of 42 exercises')).toBeInTheDocument()
+  })
 })
