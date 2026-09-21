@@ -79,6 +79,32 @@ describe('addition of a new blog', () => {
 
     assert.strictEqual(response.body.likes, 0)
   })
+
+  test('fails with 400 if the title is missing', async () => {
+    const newBlog = {
+      author: 'Test Author',
+      url: 'https://example.com/no-title',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+  })
+
+  test('fails with 400 if the url is missing', async () => {
+    const newBlog = {
+      title: 'a blog without an url',
+      author: 'Test Author',
+      likes: 1,
+    }
+
+    await api.post('/api/blogs').send(newBlog).expect(400)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+  })
 })
 
 after(async () => {
