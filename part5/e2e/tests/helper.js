@@ -29,6 +29,34 @@ const createUser = async (request, user) => {
   return response.json()
 }
 
+// Logs in without a browser and returns the JWT. Used when a test needs known
+// data (for example exact like counts) before the page is loaded.
+const loginViaApi = async (request, { username, password }) => {
+  const response = await request.post('/api/login', { data: { username, password } })
+
+  if (!response.ok()) {
+    throw new Error('logging in through the API failed with status ' + response.status())
+  }
+
+  const body = await response.json()
+
+  return body.token
+}
+
+// Creates a blog through the API with an explicit likes value.
+const createBlogViaApi = async (request, token, blog) => {
+  const response = await request.post('/api/blogs', {
+    data: blog,
+    headers: { Authorization: 'Bearer ' + token },
+  })
+
+  if (!response.ok()) {
+    throw new Error('creating a blog through the API failed with status ' + response.status())
+  }
+
+  return response.json()
+}
+
 const loginWith = async (page, username, password) => {
   await page.getByRole('textbox').first().fill(username)
   await page.locator('input[type="password"]').fill(password)
@@ -68,4 +96,14 @@ const likeBlog = async (page, title) => {
   await page.locator('.blog', { hasText: title }).first().getByRole('button', { name: 'like' }).click()
 }
 
-module.exports = { resetAndSeed, createUser, loginWith, logout, createBlog, expandBlog, likeBlog }
+module.exports = {
+  resetAndSeed,
+  createUser,
+  loginViaApi,
+  createBlogViaApi,
+  loginWith,
+  logout,
+  createBlog,
+  expandBlog,
+  likeBlog,
+}

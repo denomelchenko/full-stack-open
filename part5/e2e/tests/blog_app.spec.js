@@ -1,5 +1,15 @@
 const { test, expect } = require('@playwright/test')
-const { resetAndSeed, createUser, loginWith, logout, createBlog, expandBlog, likeBlog } = require('./helper')
+const {
+  resetAndSeed,
+  createUser,
+  loginViaApi,
+  createBlogViaApi,
+  loginWith,
+  logout,
+  createBlog,
+  expandBlog,
+  likeBlog,
+} = require('./helper')
 
 const testUser = {
   username: 'mluukkai',
@@ -105,5 +115,48 @@ test.describe('Blog app', () => {
 
     const creatorBlog = page.locator('.blog', { hasText: newBlog.title }).first()
     await expect(creatorBlog.getByRole('button', { name: 'remove' })).toBeVisible()
+  })
+
+  test('blogs are ordered by likes, most liked first', async ({ page, request }) => {
+    // App.jsx renders the login form whenever there is no user, so the blog
+    // list is only visible once logged in. Log in through the UI first: the
+    // session is persisted in localStorage and survives the reload below.
+    await loginWith(page, testUser.username, testUser.password)
+
+    const token = await loginViaApi(request, testUser)
+
+    await createBlogViaApi(request, token, {
+      title: 'The blog with three likes',
+      author: 'Matti Luukkainen',
+      url: 'https://example.com/three',
+      likes: 3,
+    })
+    await createBlogViaApi(request, token, {
+      title: 'The blog with two likes',
+      author: 'Matti Luukkainen',
+      url: 'https://example.com/two',
+      likes: 2,
+    })
+    await createBlogViaApi(request, token, {
+      title: 'The blog with one like',
+      author: 'Matti Luukkainen',
+      url: 'https://example.com/one',
+      likes: 1,
+    })
+
+    // The page fetched its blogs before the seeding, so ask it to fetch again.
+    // The persisted login keeps the list rendered after the reload.
+    await page.reload()
+
+    // allTextContents() does not auto-wait, so first wait until the seeded
+    // blogs have been fetched and rendered; only then read them in DOM order.
+    await expect(page.locator('.blog')).toHaveCount(3)
+
+    const blogTexts = await page.locator('.blog').allTextContents()
+
+    expect(blogTexts).toHaveLength(3)
+    expect(blogTexts[0]).toContain('The blog with three likes')
+    expect(blogTexts[1]).toContain('The blog with two likes')
+    expect(blogTexts[2]).toContain('The blog with one like')
   })
 })
