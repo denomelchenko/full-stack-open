@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
 import BlogForm from './components/BlogForm'
-import Notification from './components/Notification'
 import Togglable from './components/Togglable'
+import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -12,8 +12,8 @@ const App = () => {
   const [user, setUser] = useState(null)
   const [notification, setNotification] = useState(null)
 
-  const notificationTimer = useRef(null)
   const blogFormRef = useRef()
+  const notificationTimer = useRef(null)
 
   useEffect(() => {
     blogService.getAll().then((initialBlogs) => {
@@ -85,6 +85,16 @@ const App = () => {
     }
   }
 
+  const handleDelete = async (blogToDelete) => {
+    try {
+      await blogService.remove(blogToDelete.id)
+      setBlogs(blogs.filter((blog) => blog.id !== blogToDelete.id))
+      notify('blog ' + blogToDelete.title + ' deleted')
+    } catch {
+      notify('the blog could not be deleted', 'error')
+    }
+  }
+
   if (user === null) {
     return (
       <div>
@@ -109,7 +119,13 @@ const App = () => {
         <BlogForm createBlog={addBlog} />
       </Togglable>
       {blogsToShow.map((blog) => (
-        <Blog key={blog.id} blog={blog} handleLike={handleLike} />
+        <Blog
+          key={blog.id}
+          blog={blog}
+          user={user}
+          handleLike={handleLike}
+          handleDelete={handleDelete}
+        />
       ))}
     </div>
   )
