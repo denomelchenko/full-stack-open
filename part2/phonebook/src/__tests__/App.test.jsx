@@ -52,20 +52,43 @@ describe('phonebook', () => {
     expect(screen.queryByText('Arto Hellas 040-123456')).not.toBeInTheDocument()
   })
 
-  test('does not add a duplicate name and alerts instead', async () => {
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+  test('replaces the number of an existing person after confirmation', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    personsService.update.mockResolvedValue({
+      name: 'Arto Hellas',
+      number: '040-999999',
+      id: '1',
+    })
     const user = userEvent.setup()
     render(<App />)
     await screen.findByText('Arto Hellas 040-123456')
 
     await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.type(screen.getByLabelText('number'), '040-999999')
     await user.click(screen.getByRole('button', { name: 'add' }))
 
-    expect(alertSpy).toHaveBeenCalledWith(
-      'Arto Hellas is already added to phonebook'
-    )
-    expect(screen.getAllByText(/Arto Hellas/)).toHaveLength(1)
-    alertSpy.mockRestore()
+    expect(personsService.update).toHaveBeenCalledWith('1', {
+      name: 'Arto Hellas',
+      number: '040-999999',
+      id: '1',
+    })
+    expect(await screen.findByText('Arto Hellas 040-999999')).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  test('keeps the old number when the replacement is cancelled', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.type(screen.getByLabelText('number'), '040-999999')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(personsService.update).not.toHaveBeenCalled()
+    expect(screen.getByText('Arto Hellas 040-123456')).toBeInTheDocument()
+    confirmSpy.mockRestore()
   })
 
   test('saves a new person to the server and shows the response', async () => {
