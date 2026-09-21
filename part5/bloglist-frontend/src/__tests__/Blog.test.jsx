@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import Blog from '../components/Blog'
 
 const blog = {
@@ -22,5 +23,15 @@ describe('<Blog />', () => {
     expect(screen.getByText(blog.author)).toBeVisible()
     expect(screen.getByText(blog.url)).not.toBeVisible()
     expect(screen.getByText('likes ' + blog.likes)).not.toBeVisible()
+  })
+
+  test('shows the url and the likes when the details button is clicked', async () => {
+    const user = userEvent.setup()
+    render(<Blog blog={blog} user={blog.user} handleLike={vi.fn()} handleDelete={vi.fn()} />)
+
+    await user.click(screen.getByText('view'))
+
+    expect(screen.getByText(blog.url)).toBeVisible()
+    expect(screen.getByText('likes ' + blog.likes)).toBeVisible()
   })
 })
