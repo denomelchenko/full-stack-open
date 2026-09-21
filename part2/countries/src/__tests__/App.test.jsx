@@ -2,10 +2,15 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import countriesService from '../services/countries'
+import weatherService from '../services/weather'
 import App from '../App'
 
 vi.mock('../services/countries', () => ({
   default: { getAll: vi.fn() },
+}))
+
+vi.mock('../services/weather', () => ({
+  default: { getWeather: vi.fn() },
 }))
 
 const country = (common, capital, area, languages, latlng) => ({
@@ -40,6 +45,7 @@ const renderApp = async () => {
 beforeEach(() => {
   vi.clearAllMocks()
   countriesService.getAll.mockResolvedValue(countryData)
+  weatherService.getWeather.mockResolvedValue({ temperature: 14.6, windSpeed: 27 })
 })
 
 describe('countries', () => {
@@ -96,5 +102,17 @@ describe('countries', () => {
     expect(screen.getByRole('heading', { name: 'Japan' })).toBeInTheDocument()
     expect(screen.getByText('capital Tokyo')).toBeInTheDocument()
     expect(screen.queryByText('Panama')).not.toBeInTheDocument()
+  })
+
+  test('shows the weather of the only matching country capital', async () => {
+    const user = userEvent.setup()
+    await renderApp()
+
+    await user.type(screen.getByLabelText('find countries'), 'fin')
+
+    expect(await screen.findByText('Weather in Helsinki')).toBeInTheDocument()
+    expect(screen.getByText('Temperature 14.6 °C')).toBeInTheDocument()
+    expect(screen.getByText('Wind 27 km/h')).toBeInTheDocument()
+    expect(weatherService.getWeather).toHaveBeenCalledWith([60.17, 24.94])
   })
 })
