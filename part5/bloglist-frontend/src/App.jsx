@@ -7,6 +7,9 @@ import loginService from './services/login'
 const App = () => {
   const [blogs, setBlogs] = useState([])
   const [user, setUser] = useState(null)
+  const [newTitle, setNewTitle] = useState('')
+  const [newAuthor, setNewAuthor] = useState('')
+  const [newUrl, setNewUrl] = useState('')
 
   useEffect(() => {
     blogService.getAll().then((initialBlogs) => {
@@ -36,6 +39,23 @@ const App = () => {
     }
   }
 
+  const addBlog = async (event) => {
+    event.preventDefault()
+    try {
+      const createdBlog = await blogService.create({
+        title: newTitle,
+        author: newAuthor,
+        url: newUrl,
+      })
+      setBlogs(blogs.concat(createdBlog))
+      setNewTitle('')
+      setNewAuthor('')
+      setNewUrl('')
+    } catch (exception) {
+      console.log(exception.message)
+    }
+  }
+
   const handleLogout = () => {
     window.localStorage.removeItem('loggedBlogappUser')
     blogService.setToken(null)
@@ -51,6 +71,40 @@ const App = () => {
     )
   }
 
+  const blogForm = () => (
+    <form onSubmit={addBlog}>
+      <h2>create new</h2>
+      <div>
+        <label>
+          title
+          <input
+            value={newTitle}
+            onChange={({ target }) => setNewTitle(target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          author
+          <input
+            value={newAuthor}
+            onChange={({ target }) => setNewAuthor(target.value)}
+          />
+        </label>
+      </div>
+      <div>
+        <label>
+          url
+          <input
+            value={newUrl}
+            onChange={({ target }) => setNewUrl(target.value)}
+          />
+        </label>
+      </div>
+      <button type="submit">create</button>
+    </form>
+  )
+
   return (
     <div>
       <h2>blogs</h2>
@@ -58,6 +112,7 @@ const App = () => {
         {user.name} logged in
         <button onClick={handleLogout}>logout</button>
       </p>
+      {blogForm()}
       {blogs.map((blog) => (
         <Blog key={blog.id} blog={blog} />
       ))}
