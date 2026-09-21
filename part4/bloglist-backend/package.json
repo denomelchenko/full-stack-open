@@ -1,0 +1,17 @@
+{
+  "name": "bloglist-backend",
+  "version": "1.0.0",
+  "description": "Full Stack Open part 4 bloglist backend",
+  "private": true,
+  "main": "index.js",
+  "packageManager": "pnpm@12.5.1",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "mongoose": "^8.11.0"
+  }
+}
