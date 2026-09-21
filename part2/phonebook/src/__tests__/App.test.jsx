@@ -32,4 +32,16 @@ describe('phonebook', () => {
     expect(screen.getAllByText(/Arto Hellas/)).toHaveLength(1)
     alertSpy.mockRestore()
   })
+
+  test('adds a person together with a phone number', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByLabelText('name'), 'Ada Lovelace')
+    await user.type(screen.getByLabelText('number'), '12-34-5678')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(screen.getByText('Ada Lovelace 12-34-5678')).toBeInTheDocument()
+    expect(screen.getByLabelText('number')).toHaveValue('')
+  })
 })
