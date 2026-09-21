@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import personsService from '../services/persons'
@@ -89,5 +89,35 @@ describe('phonebook', () => {
     expect(await screen.findByText('Grace Hopper 040-999999')).toBeInTheDocument()
     expect(screen.getByLabelText('name')).toHaveValue('')
     expect(screen.getByLabelText('number')).toHaveValue('')
+  })
+
+  test('deletes a person after confirmation', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    personsService.remove.mockResolvedValue({})
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    const row = screen.getByText(/Arto Hellas/)
+    await user.click(within(row).getByRole('button', { name: 'delete' }))
+
+    expect(confirmSpy).toHaveBeenCalledWith('Delete Arto Hellas?')
+    expect(personsService.remove).toHaveBeenCalledWith('1')
+    expect(screen.queryByText('Arto Hellas 040-123456')).not.toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  test('keeps the person when the confirmation is cancelled', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    const row = screen.getByText(/Arto Hellas/)
+    await user.click(within(row).getByRole('button', { name: 'delete' }))
+
+    expect(personsService.remove).not.toHaveBeenCalled()
+    expect(screen.getByText('Arto Hellas 040-123456')).toBeInTheDocument()
+    confirmSpy.mockRestore()
   })
 })

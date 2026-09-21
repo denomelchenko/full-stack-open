@@ -36,6 +36,14 @@ const App = () => {
     })
   }
 
+  const handleDelete = (person) => {
+    if (window.confirm('Delete ' + person.name + '?')) {
+      personsService.remove(person.id).then(() => {
+        setPersons(persons.filter((item) => item.id !== person.id))
+      })
+    }
+  }
+
   const personsToShow = persons.filter((person) =>
     person.name.toLowerCase().includes(filter.toLowerCase())
   )
@@ -56,7 +64,7 @@ const App = () => {
         onNumberChange={(event) => setNewNumber(event.target.value)}
       />
       <h2>Numbers</h2>
-      <Persons persons={personsToShow} />
+      <Persons persons={personsToShow} onDelete={handleDelete} />
     </div>
   )
 }
