@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import App from '../App'
 
 describe('phonebook', () => {
@@ -18,5 +18,18 @@ describe('phonebook', () => {
 
     expect(screen.getByText(/Ada Lovelace/)).toBeInTheDocument()
     expect(screen.getByLabelText('name')).toHaveValue('')
+  })
+
+  test('does not add a duplicate name and alerts instead', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(alertSpy).toHaveBeenCalledWith('Arto Hellas is already added to phonebook')
+    expect(screen.getAllByText(/Arto Hellas/)).toHaveLength(1)
+    alertSpy.mockRestore()
   })
 })
