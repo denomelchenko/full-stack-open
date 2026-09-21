@@ -1,10 +1,16 @@
 const { test, expect } = require('@playwright/test')
-const { resetAndSeed, loginWith, createBlog, expandBlog, likeBlog } = require('./helper')
+const { resetAndSeed, createUser, loginWith, logout, createBlog, expandBlog, likeBlog } = require('./helper')
 
 const testUser = {
   username: 'mluukkai',
   name: 'Matti Luukkainen',
   password: 'salainen',
+}
+
+const otherUser = {
+  username: 'ada',
+  name: 'Ada Lovelace',
+  password: 'lovelace',
 }
 
 const newBlog = {
@@ -77,5 +83,27 @@ test.describe('Blog app', () => {
       .click()
 
     await expect(page.locator('.blog', { hasText: newBlog.title })).toHaveCount(0)
+  })
+
+  test('only the user who created a blog sees its delete button', async ({ page, request }) => {
+    await loginWith(page, testUser.username, testUser.password)
+    await createBlog(page, newBlog)
+    await logout(page)
+
+    await createUser(request, otherUser)
+    await loginWith(page, otherUser.username, otherUser.password)
+
+    await expandBlog(page, newBlog.title)
+
+    const otherUserBlog = page.locator('.blog', { hasText: newBlog.title }).first()
+    await expect(otherUserBlog.getByRole('button', { name: 'like' })).toBeVisible()
+    await expect(otherUserBlog.getByRole('button', { name: 'remove' })).toHaveCount(0)
+
+    await logout(page)
+    await loginWith(page, testUser.username, testUser.password)
+    await expandBlog(page, newBlog.title)
+
+    const creatorBlog = page.locator('.blog', { hasText: newBlog.title }).first()
+    await expect(creatorBlog.getByRole('button', { name: 'remove' })).toBeVisible()
   })
 })

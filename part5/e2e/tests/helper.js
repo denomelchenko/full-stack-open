@@ -18,10 +18,25 @@ const resetAndSeed = async (request, user) => {
   return createResponse.json()
 }
 
+// Creates one more user without touching the blogs that already exist.
+const createUser = async (request, user) => {
+  const response = await request.post('/api/users', { data: user })
+
+  if (!response.ok()) {
+    throw new Error('creating a user failed with status ' + response.status())
+  }
+
+  return response.json()
+}
+
 const loginWith = async (page, username, password) => {
   await page.getByRole('textbox').first().fill(username)
   await page.locator('input[type="password"]').fill(password)
   await page.getByRole('button', { name: 'login' }).click()
+}
+
+const logout = async (page) => {
+  await page.getByRole('button', { name: 'logout' }).click()
 }
 
 // Opens the create-blog form (exercise 5.5), fills the three fields in their
@@ -53,4 +68,4 @@ const likeBlog = async (page, title) => {
   await page.locator('.blog', { hasText: title }).first().getByRole('button', { name: 'like' }).click()
 }
 
-module.exports = { resetAndSeed, loginWith, createBlog, expandBlog, likeBlog }
+module.exports = { resetAndSeed, createUser, loginWith, logout, createBlog, expandBlog, likeBlog }
