@@ -27,6 +27,9 @@ cypress/screenshots/
 playwright-report/
 test-results/
 
+# git worktrees (isolated workspaces)
+.worktrees/
+
 # editors / OS
 .DS_Store
 Thumbs.db
