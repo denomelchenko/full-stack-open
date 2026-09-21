@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import LoginForm from './components/LoginForm'
+import Notification from './components/Notification'
 import blogService from './services/blogs'
 import loginService from './services/login'
 
@@ -10,6 +11,9 @@ const App = () => {
   const [newTitle, setNewTitle] = useState('')
   const [newAuthor, setNewAuthor] = useState('')
   const [newUrl, setNewUrl] = useState('')
+  const [notification, setNotification] = useState(null)
+
+  const notificationTimer = useRef(null)
 
   useEffect(() => {
     blogService.getAll().then((initialBlogs) => {
@@ -26,6 +30,17 @@ const App = () => {
     }
   }, [])
 
+  const notify = (message, type = 'success') => {
+    setNotification({ message, type })
+    if (notificationTimer.current) {
+      clearTimeout(notificationTimer.current)
+    }
+    notificationTimer.current = setTimeout(() => {
+      setNotification(null)
+      notificationTimer.current = null
+    }, 5000)
+  }
+
   const handleLogin = async (username, password) => {
     try {
       const loggedUser = await loginService.login({ username, password })
@@ -35,8 +50,14 @@ const App = () => {
       blogService.setToken(loggedUser.token)
       setUser(loggedUser)
     } catch {
-      console.log('wrong credentials')
+      notify('wrong username or password', 'error')
     }
+  }
+
+  const handleLogout = () => {
+    window.localStorage.removeItem('loggedBlogappUser')
+    blogService.setToken(null)
+    setUser(null)
   }
 
   const addBlog = async (event) => {
@@ -51,21 +72,17 @@ const App = () => {
       setNewTitle('')
       setNewAuthor('')
       setNewUrl('')
-    } catch (exception) {
-      console.log(exception.message)
+      notify('a new blog ' + createdBlog.title + ' by ' + createdBlog.author + ' added')
+    } catch {
+      notify('the blog could not be created', 'error')
     }
-  }
-
-  const handleLogout = () => {
-    window.localStorage.removeItem('loggedBlogappUser')
-    blogService.setToken(null)
-    setUser(null)
   }
 
   if (user === null) {
     return (
       <div>
         <h2>Log in to application</h2>
+        <Notification notification={notification} />
         <LoginForm onLogin={handleLogin} />
       </div>
     )
@@ -108,6 +125,7 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+      <Notification notification={notification} />
       <p>
         {user.name} logged in
         <button onClick={handleLogout}>logout</button>
