@@ -34,4 +34,18 @@ describe('<Blog />', () => {
     expect(screen.getByText(blog.url)).toBeVisible()
     expect(screen.getByText('likes ' + blog.likes)).toBeVisible()
   })
+
+  test('clicking the like button twice calls the like handler twice', async () => {
+    const user = userEvent.setup()
+    const handleLike = vi.fn()
+    render(<Blog blog={blog} user={blog.user} handleLike={handleLike} handleDelete={vi.fn()} />)
+
+    await user.click(screen.getByText('view'))
+
+    const likeButton = screen.getByText('like')
+    await user.click(likeButton)
+    await user.click(likeButton)
+
+    expect(handleLike.mock.calls).toHaveLength(2)
+  })
 })
