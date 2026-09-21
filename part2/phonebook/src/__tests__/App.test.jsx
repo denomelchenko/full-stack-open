@@ -1,10 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import axios from 'axios'
+import personsService from '../services/persons'
 import App from '../App'
 
-vi.mock('axios')
+vi.mock('../services/persons', () => ({
+  default: {
+    getAll: vi.fn(),
+    create: vi.fn(),
+    remove: vi.fn(),
+    update: vi.fn(),
+  },
+}))
 
 const serverPersons = [
   { name: 'Arto Hellas', number: '040-123456', id: '1' },
@@ -13,7 +20,7 @@ const serverPersons = [
 
 beforeEach(() => {
   vi.clearAllMocks()
-  axios.get.mockResolvedValue({ data: serverPersons })
+  personsService.getAll.mockResolvedValue(serverPersons)
 })
 
 describe('phonebook', () => {
@@ -22,7 +29,7 @@ describe('phonebook', () => {
 
     expect(await screen.findByText('Arto Hellas 040-123456')).toBeInTheDocument()
     expect(screen.getByText('Ada Lovelace 39-44-5323523')).toBeInTheDocument()
-    expect(axios.get).toHaveBeenCalledWith('http://localhost:3001/persons')
+    expect(personsService.getAll).toHaveBeenCalledTimes(1)
   })
 
   test('no longer renders the old local seed', async () => {
@@ -62,8 +69,10 @@ describe('phonebook', () => {
   })
 
   test('saves a new person to the server and shows the response', async () => {
-    axios.post.mockResolvedValue({
-      data: { name: 'Grace Hopper', number: '040-999999', id: '5' },
+    personsService.create.mockResolvedValue({
+      name: 'Grace Hopper',
+      number: '040-999999',
+      id: '5',
     })
     const user = userEvent.setup()
     render(<App />)
@@ -73,7 +82,7 @@ describe('phonebook', () => {
     await user.type(screen.getByLabelText('number'), '040-999999')
     await user.click(screen.getByRole('button', { name: 'add' }))
 
-    expect(axios.post).toHaveBeenCalledWith('http://localhost:3001/persons', {
+    expect(personsService.create).toHaveBeenCalledWith({
       name: 'Grace Hopper',
       number: '040-999999',
     })
