@@ -60,4 +60,22 @@ test.describe('Blog app', () => {
       page.locator('.blog', { hasText: newBlog.title }).first().getByText(/likes:?\s*1/i)
     ).toBeVisible()
   })
+
+  test('a blog can be deleted by the user who added it', async ({ page }) => {
+    await loginWith(page, testUser.username, testUser.password)
+    await createBlog(page, newBlog)
+
+    // window.confirm blocks the page: Playwright only continues once the
+    // dialog is handled. Register the handler BEFORE clicking delete.
+    page.on('dialog', (dialog) => dialog.accept())
+
+    await expandBlog(page, newBlog.title)
+    await page
+      .locator('.blog', { hasText: newBlog.title })
+      .first()
+      .getByRole('button', { name: 'remove' })
+      .click()
+
+    await expect(page.locator('.blog', { hasText: newBlog.title })).toHaveCount(0)
+  })
 })
