@@ -74,7 +74,12 @@ const App = () => {
   const handleLike = async (blogToLike) => {
     try {
       const updatedBlog = await blogService.update(blogToLike.id, blogToLike)
-      setBlogs(blogs.map((blog) => (blog.id === updatedBlog.id ? updatedBlog : blog)))
+      setBlogs(blogs.map((blog) => {
+        if (blog.id !== updatedBlog.id) {
+          return blog
+        }
+        return { ...updatedBlog, user: blog.user }
+      }))
     } catch {
       notify('the blog could not be liked', 'error')
     }
