@@ -61,7 +61,10 @@ describe('phonebook', () => {
     alertSpy.mockRestore()
   })
 
-  test('adds a person locally and clears the inputs', async () => {
+  test('saves a new person to the server and shows the response', async () => {
+    axios.post.mockResolvedValue({
+      data: { name: 'Grace Hopper', number: '040-999999', id: '5' },
+    })
     const user = userEvent.setup()
     render(<App />)
     await screen.findByText('Arto Hellas 040-123456')
@@ -70,7 +73,12 @@ describe('phonebook', () => {
     await user.type(screen.getByLabelText('number'), '040-999999')
     await user.click(screen.getByRole('button', { name: 'add' }))
 
-    expect(screen.getByText('Grace Hopper 040-999999')).toBeInTheDocument()
+    expect(axios.post).toHaveBeenCalledWith('http://localhost:3001/persons', {
+      name: 'Grace Hopper',
+      number: '040-999999',
+    })
+    expect(await screen.findByText('Grace Hopper 040-999999')).toBeInTheDocument()
     expect(screen.getByLabelText('name')).toHaveValue('')
+    expect(screen.getByLabelText('number')).toHaveValue('')
   })
 })
