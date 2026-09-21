@@ -107,6 +107,36 @@ describe('addition of a new blog', () => {
   })
 })
 
+describe('deletion of a blog', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+  })
+
+  test('succeeds with status code 204 if the id is valid', async () => {
+    const blogsAtStart = await helper.blogsInDb()
+    const blogToDelete = blogsAtStart[0]
+
+    await api.delete('/api/blogs/' + blogToDelete.id).expect(204)
+
+    const blogsAtEnd = await helper.blogsInDb()
+
+    const ids = blogsAtEnd.map((blog) => blog.id)
+    assert(!ids.includes(blogToDelete.id))
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
+  })
+
+  test('succeeds with status code 204 if the id does not exist', async () => {
+    const validNonexistingId = await helper.nonExistingId()
+
+    await api.delete('/api/blogs/' + validNonexistingId).expect(204)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
