@@ -1,10 +1,16 @@
 const { test, expect } = require('@playwright/test')
-const { resetAndSeed, loginWith } = require('./helper')
+const { resetAndSeed, loginWith, createBlog } = require('./helper')
 
 const testUser = {
   username: 'mluukkai',
   name: 'Matti Luukkainen',
   password: 'salainen',
+}
+
+const newBlog = {
+  title: 'Playwright and the bloglist',
+  author: 'Matti Luukkainen',
+  url: 'https://example.com/playwright',
 }
 
 test.describe('Blog app', () => {
@@ -32,5 +38,14 @@ test.describe('Blog app', () => {
     await expect(page.getByRole('button', { name: 'login' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'logout' })).toHaveCount(0)
     await expect(page.getByText(/wrong|invalid/i)).toBeVisible()
+  })
+
+  test('a logged in user can create a blog', async ({ page }) => {
+    await loginWith(page, testUser.username, testUser.password)
+
+    await createBlog(page, newBlog)
+
+    await expect(page.locator('.blog', { hasText: newBlog.title })).toBeVisible()
+    await expect(page.locator('.blog', { hasText: newBlog.title })).toContainText(newBlog.author)
   })
 })

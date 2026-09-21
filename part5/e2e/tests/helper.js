@@ -24,4 +24,21 @@ const loginWith = async (page, username, password) => {
   await page.getByRole('button', { name: 'login' }).click()
 }
 
-module.exports = { resetAndSeed, loginWith }
+// Opens the create-blog form (exercise 5.5), fills the three fields in their
+// DOM order (title, author, url - exercise 5.6), submits, and then WAITS until
+// the new blog is rendered. The wait is the fix for the lost-item flake: the
+// form empties before the server has answered, so without it a fast test can
+// look at a list that does not contain the new item yet.
+const createBlog = async (page, { title, author, url }) => {
+  await page.getByRole('button', { name: /create new blog|new blog/i }).click()
+
+  const form = page.locator('form')
+  await form.getByRole('textbox').nth(0).fill(title)
+  await form.getByRole('textbox').nth(1).fill(author)
+  await form.getByRole('textbox').nth(2).fill(url)
+  await form.getByRole('button', { name: /create|save|add/i }).click()
+
+  await page.locator('.blog', { hasText: title }).first().waitFor()
+}
+
+module.exports = { resetAndSeed, loginWith, createBlog }
