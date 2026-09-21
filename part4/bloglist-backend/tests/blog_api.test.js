@@ -37,6 +37,35 @@ describe('when there is initially some blogs saved', () => {
   })
 })
 
+describe('addition of a new blog', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({})
+    await Blog.insertMany(helper.initialBlogs)
+  })
+
+  test('succeeds with valid data', async () => {
+    const newBlog = {
+      title: 'async/await simplifies making async calls',
+      author: 'Test Author',
+      url: 'https://example.com/async-await',
+      likes: 5,
+    }
+
+    await api
+      .post('/api/blogs')
+      .send(newBlog)
+      .expect(201)
+      .expect('Content-Type', /application\/json/)
+
+    const blogsAtEnd = await helper.blogsInDb()
+
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+
+    const titles = blogsAtEnd.map((blog) => blog.title)
+    assert(titles.includes('async/await simplifies making async calls'))
+  })
+})
+
 after(async () => {
   await mongoose.connection.close()
 })
