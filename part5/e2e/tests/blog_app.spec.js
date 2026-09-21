@@ -1,5 +1,5 @@
 const { test, expect } = require('@playwright/test')
-const { resetAndSeed, loginWith, createBlog } = require('./helper')
+const { resetAndSeed, loginWith, createBlog, expandBlog, likeBlog } = require('./helper')
 
 const testUser = {
   username: 'mluukkai',
@@ -47,5 +47,17 @@ test.describe('Blog app', () => {
 
     await expect(page.locator('.blog', { hasText: newBlog.title })).toBeVisible()
     await expect(page.locator('.blog', { hasText: newBlog.title })).toContainText(newBlog.author)
+  })
+
+  test('a blog can be liked', async ({ page }) => {
+    await loginWith(page, testUser.username, testUser.password)
+    await createBlog(page, newBlog)
+
+    await expandBlog(page, newBlog.title)
+    await likeBlog(page, newBlog.title)
+
+    await expect(
+      page.locator('.blog', { hasText: newBlog.title }).first().getByText(/likes:?\s*1/i)
+    ).toBeVisible()
   })
 })

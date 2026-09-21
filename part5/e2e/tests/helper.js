@@ -26,9 +26,7 @@ const loginWith = async (page, username, password) => {
 
 // Opens the create-blog form (exercise 5.5), fills the three fields in their
 // DOM order (title, author, url - exercise 5.6), submits, and then WAITS until
-// the new blog is rendered. The wait is the fix for the lost-item flake: the
-// form empties before the server has answered, so without it a fast test can
-// look at a list that does not contain the new item yet.
+// the new blog is rendered. The wait is the fix for the lost-item flake.
 const createBlog = async (page, { title, author, url }) => {
   await page.getByRole('button', { name: /create new blog|new blog/i }).click()
 
@@ -41,4 +39,18 @@ const createBlog = async (page, { title, author, url }) => {
   await page.locator('.blog', { hasText: title }).first().waitFor()
 }
 
-module.exports = { resetAndSeed, loginWith, createBlog }
+// The details of a blog are hidden behind the exercise 5.7 toggle. The regex
+// accepts "view"/"details" (collapsed) and "hide" (expanded).
+const expandBlog = async (page, title) => {
+  await page
+    .locator('.blog', { hasText: title })
+    .first()
+    .getByRole('button', { name: /view|details|hide/i })
+    .click()
+}
+
+const likeBlog = async (page, title) => {
+  await page.locator('.blog', { hasText: title }).first().getByRole('button', { name: 'like' }).click()
+}
+
+module.exports = { resetAndSeed, loginWith, createBlog, expandBlog, likeBlog }
