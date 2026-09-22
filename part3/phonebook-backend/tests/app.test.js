@@ -124,4 +124,20 @@ describe('phonebook backend', () => {
     write.mockRestore()
   })
 
+  test('logs the body of a POST request', async () => {
+    const app = loadApp()
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+
+    await request(app)
+      .post('/api/persons')
+      .send({ name: 'Grace Hopper', number: '040-999999' })
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    const logged = write.mock.calls.map((call) => String(call[0])).join('')
+    // morgan >= 1.11 escapes string token output so a log line stays
+    // line-oriented, so the JSON body is logged with escaped quotes.
+    const body = '{"name":"Grace Hopper","number":"040-999999"}'
+    expect(logged).toContain(body.replaceAll('"', '\\"'))
+    write.mockRestore()
+  })
 })
