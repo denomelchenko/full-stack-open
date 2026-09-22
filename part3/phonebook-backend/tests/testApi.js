@@ -115,6 +115,26 @@ const restoreStatics = () => {
     Promise.resolve(people.some((person) => person.name === filter.name))
 
   FakePerson.prototype.save = function () {
+    if (this.name.length < 3) {
+      const error = new Error(
+        'Person validation failed: name: Path `name` (`' +
+          this.name +
+          '`) is shorter than the minimum allowed length (3).'
+      )
+      error.name = 'ValidationError'
+      return Promise.reject(error)
+    }
+
+    if (!/^\d{2,3}-\d+$/.test(this.number)) {
+      const error = new Error(
+        'Person validation failed: number: ' +
+          this.number +
+          ' is not a valid phone number'
+      )
+      error.name = 'ValidationError'
+      return Promise.reject(error)
+    }
+
     if (this._id === undefined) {
       this._id = String(people.length + 1)
     }

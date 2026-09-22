@@ -238,4 +238,26 @@ describe('phonebook', () => {
     expect(await screen.findByText('Arto Hellas 040-777777')).toBeInTheDocument()
     confirmSpy.mockRestore()
   })
+
+  test('shows the validation error returned by the server', async () => {
+    const error = new Error('Request failed with status code 400')
+    error.response = {
+      data: {
+        error:
+          'Person validation failed: name: Path `name` (`Al`) is shorter than the minimum allowed length (3).',
+      },
+    }
+    personsService.create.mockRejectedValue(error)
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    await user.type(screen.getByLabelText('name'), 'Al')
+    await user.type(screen.getByLabelText('number'), '040-999999')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(
+      await screen.findByText(/shorter than the minimum allowed length/)
+    ).toBeInTheDocument()
+  })
 })

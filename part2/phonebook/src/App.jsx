@@ -41,6 +41,13 @@ const App = () => {
     setMessage(text)
   }
 
+  const errorMessage = (error) => {
+    if (error.response && error.response.data && error.response.data.error) {
+      return error.response.data.error
+    }
+    return error.message
+  }
+
   const addPerson = (event) => {
     event.preventDefault()
 
@@ -65,13 +72,17 @@ const App = () => {
             setNewNumber('')
             notify('Updated ' + returnedPerson.name)
           })
-          .catch(() => {
-            notifyError(
-              'Information of ' +
-                existing.name +
-                ' has already been removed from server'
-            )
-            setPersons(persons.filter((person) => person.id !== existing.id))
+          .catch((error) => {
+            if (error.response && error.response.status === 400) {
+              notifyError(errorMessage(error))
+            } else {
+              notifyError(
+                'Information of ' +
+                  existing.name +
+                  ' has already been removed from server'
+              )
+              setPersons(persons.filter((person) => person.id !== existing.id))
+            }
           })
       }
       return
@@ -82,12 +93,17 @@ const App = () => {
       number: newNumber,
     }
 
-    personsService.create(personObject).then((returnedPerson) => {
-      setPersons(persons.concat(returnedPerson))
-      setNewName('')
-      setNewNumber('')
-      notify('Added ' + returnedPerson.name)
-    })
+    personsService
+      .create(personObject)
+      .then((returnedPerson) => {
+        setPersons(persons.concat(returnedPerson))
+        setNewName('')
+        setNewNumber('')
+        notify('Added ' + returnedPerson.name)
+      })
+      .catch((error) => {
+        notifyError(errorMessage(error))
+      })
   }
 
   const handleDelete = (person) => {

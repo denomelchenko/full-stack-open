@@ -207,6 +207,15 @@ describe('phonebook backend', () => {
     expect(response.body.error).toBe('name must be unique')
   })
 
+  test('POST with a too short name is rejected', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Al', number: '040-999999' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('shorter than the minimum allowed length')
+  })
+
   test('logs every request in the tiny format', async () => {
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
 
