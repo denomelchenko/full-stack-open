@@ -10,6 +10,15 @@ Exercises are developed here and submitted through the
 > **Important:** exercises are submitted **one part at a time**, and after a part is submitted
 > you **cannot add more exercises to it**. Make sure the wanted exercises are done *before* submitting.
 
+## Deployed applications
+
+| Application | URL |
+|---|---|
+| Phonebook backend (part 3, serves the full-stack build) | https://phonebook-backend-gm3r.onrender.com |
+
+> The Render free instance spins down after **15 minutes without inbound traffic** and takes about a
+> minute to wake up again. Its filesystem is ephemeral, so all state lives in MongoDB Atlas.
+
 ## Structure
 
 ```
