@@ -53,24 +53,26 @@ app.delete('/api/persons/:id', (request, response) => {
   response.status(204).end()
 })
 
-module.exports = app
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', async (request, response) => {
   const body = request.body
 
   if (!body.name || !body.number) {
     return response.status(400).json({ error: 'name and number are required' })
   }
 
-  if (persons.some((person) => person.name === body.name)) {
+  const duplicate = await Person.exists({ name: body.name })
+
+  if (duplicate) {
     return response.status(400).json({ error: 'name must be unique' })
   }
 
-  const person = {
+  const person = new Person({
     name: body.name,
     number: body.number,
-    id: String(Math.floor(Math.random() * 1000000)),
-  }
+  })
 
-  persons = persons.concat(person)
-  response.json(person)
+  const savedPerson = await person.save()
+  return response.json(savedPerson)
 })
+
+module.exports = app

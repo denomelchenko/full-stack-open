@@ -74,15 +74,25 @@ describe('phonebook backend', () => {
     expect(deleted.status).toBe(204)
   })
 
-  test('POST /api/persons adds a person with a generated id', async () => {
+  test('POST creates a person with a generated id', async () => {
     const created = await request(app)
       .post('/api/persons')
       .send({ name: 'Grace Hopper', number: '040-999999' })
+    const all = await request(app).get('/api/persons')
 
     expect(created.status).toBe(200)
     expect(created.body.name).toBe('Grace Hopper')
     expect(created.body.number).toBe('040-999999')
     expect(created.body.id).toBeDefined()
+    expect(all.body).toHaveLength(5)
+  })
+
+  test('POST stores exactly one new document', async () => {
+    await request(app)
+      .post('/api/persons')
+      .send({ name: 'Grace Hopper', number: '040-999999' })
+
+    expect(people).toHaveLength(5)
   })
 
   test('POST without a name is rejected', async () => {
