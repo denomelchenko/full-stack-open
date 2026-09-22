@@ -78,4 +78,37 @@ describe('phonebook backend', () => {
     expect(created.body.id).toBeDefined()
     expect(all.body).toHaveLength(5)
   })
+
+  test('POST without a name is rejected', async () => {
+    const app = loadApp()
+
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ number: '040-999999' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('name and number are required')
+  })
+
+  test('POST without a number is rejected', async () => {
+    const app = loadApp()
+
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Grace Hopper' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('name and number are required')
+  })
+
+  test('POST with a duplicate name is rejected', async () => {
+    const app = loadApp()
+
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Arto Hellas', number: '040-999999' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('name must be unique')
+  })
 })
