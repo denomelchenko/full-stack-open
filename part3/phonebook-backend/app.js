@@ -48,8 +48,8 @@ app.get('/api/persons/:id', (request, response) => {
   }
 })
 
-app.delete('/api/persons/:id', (request, response) => {
-  persons = persons.filter((person) => person.id !== request.params.id)
+app.delete('/api/persons/:id', async (request, response) => {
+  await Person.findByIdAndDelete(request.params.id)
   response.status(204).end()
 })
 

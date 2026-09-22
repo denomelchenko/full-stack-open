@@ -68,10 +68,19 @@ describe('phonebook backend', () => {
     expect(response.status).toBe(404)
   })
 
-  test('DELETE /api/persons/:id removes the person', async () => {
+  test('DELETE /api/persons/:id removes the person from the database', async () => {
     const deleted = await request(app).delete('/api/persons/2')
+    const remaining = await request(app).get('/api/persons')
 
     expect(deleted.status).toBe(204)
+    expect(remaining.body).toHaveLength(3)
+    expect(remaining.body.map((person) => person.id)).not.toContain('2')
+  })
+
+  test('DELETE returns 204 for an unknown id', async () => {
+    const response = await request(app).delete('/api/persons/999')
+
+    expect(response.status).toBe(204)
   })
 
   test('POST creates a person with a generated id', async () => {
