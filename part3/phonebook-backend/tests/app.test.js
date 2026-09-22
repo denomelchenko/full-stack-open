@@ -21,4 +21,14 @@ describe('phonebook backend', () => {
       number: '39-23-6423122',
     })
   })
+
+  test('GET /info shows the entry count and the request time', async () => {
+    const app = loadApp()
+
+    const response = await request(app).get('/info')
+
+    expect(response.status).toBe(200)
+    expect(response.text).toContain('<p>Phonebook has info for 4 people</p>')
+    expect(response.text).toContain(String(new Date().getFullYear()))
+  })
 })
