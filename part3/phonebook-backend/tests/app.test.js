@@ -140,4 +140,12 @@ describe('phonebook backend', () => {
     expect(logged).toContain(body.replaceAll('"', '\\"'))
     write.mockRestore()
   })
+
+  test('responses carry the CORS header', async () => {
+    const app = loadApp()
+
+    const response = await request(app).get('/api/persons')
+
+    expect(response.headers['access-control-allow-origin']).toBe('*')
+  })
 })
