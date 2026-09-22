@@ -52,4 +52,15 @@ describe('phonebook backend', () => {
 
     expect(response.status).toBe(404)
   })
+
+  test('DELETE /api/persons/:id removes the person', async () => {
+    const app = loadApp()
+
+    const deleted = await request(app).delete('/api/persons/2')
+    const remaining = await request(app).get('/api/persons')
+
+    expect(deleted.status).toBe(204)
+    expect(remaining.body).toHaveLength(3)
+    expect(remaining.body.map((person) => person.id)).not.toContain('2')
+  })
 })
