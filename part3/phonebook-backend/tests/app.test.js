@@ -63,4 +63,19 @@ describe('phonebook backend', () => {
     expect(remaining.body).toHaveLength(3)
     expect(remaining.body.map((person) => person.id)).not.toContain('2')
   })
+
+  test('POST /api/persons adds a person with a generated id', async () => {
+    const app = loadApp()
+
+    const created = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Grace Hopper', number: '040-999999' })
+    const all = await request(app).get('/api/persons')
+
+    expect(created.status).toBe(200)
+    expect(created.body.name).toBe('Grace Hopper')
+    expect(created.body.number).toBe('040-999999')
+    expect(created.body.id).toBeDefined()
+    expect(all.body).toHaveLength(5)
+  })
 })
