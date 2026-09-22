@@ -96,6 +96,18 @@ const restoreStatics = () => {
     if (isCastError(id)) {
       return Promise.reject(castError())
     }
+    if (
+      update.number !== undefined &&
+      (!/^\d{2,3}-\d+$/.test(update.number) || update.number.length < 8)
+    ) {
+      const error = new Error(
+        'Person validation failed: number: ' +
+          update.number +
+          ' is not a valid phone number'
+      )
+      error.name = 'ValidationError'
+      return Promise.reject(error)
+    }
     const person = people.find((item) => item._id === id)
     if (person === undefined) {
       return Promise.resolve(null)
@@ -125,7 +137,7 @@ const restoreStatics = () => {
       return Promise.reject(error)
     }
 
-    if (!/^\d{2,3}-\d+$/.test(this.number)) {
+    if (!/^\d{2,3}-\d+$/.test(this.number) || this.number.length < 8) {
       const error = new Error(
         'Person validation failed: number: ' +
           this.number +

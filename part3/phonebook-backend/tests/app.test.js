@@ -180,6 +180,87 @@ describe('phonebook backend', () => {
     expect(response.body.error).toBe('name and number are required')
   })
 
+  test('POST accepts 09-1234556', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Valid One', number: '09-1234556' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.number).toBe('09-1234556')
+  })
+
+  test('POST accepts 040-22334455', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Valid Two', number: '040-22334455' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.number).toBe('040-22334455')
+  })
+
+  test('POST rejects 1234556 (no separator)', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Invalid One', number: '1234556' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('POST rejects 1-22334455 (one-digit first part)', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Invalid Two', number: '1-22334455' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('POST rejects 10-22-334455 (two separators)', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Invalid Three', number: '10-22-334455' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('PUT rejects 10-22-334455 as well', async () => {
+    const response = await request(app)
+      .put('/api/persons/1')
+      .send({ name: 'Arto Hellas', number: '10-22-334455' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('POST rejects 09-1 (fewer than 8 characters)', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Too Short', number: '09-1' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('PUT rejects 09-1 as well (fewer than 8 characters)', async () => {
+    const response = await request(app)
+      .put('/api/persons/1')
+      .send({ name: 'Arto Hellas', number: '09-1' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toContain('not a valid phone number')
+  })
+
+  test('POST accepts 040-1234 (exactly 8 characters)', async () => {
+    const response = await request(app)
+      .post('/api/persons')
+      .send({ name: 'Exactly Eight', number: '040-1234' })
+
+    expect(response.status).toBe(200)
+    expect(response.body.number).toBe('040-1234')
+  })
+
   test('POST without a name is rejected', async () => {
     const response = await request(app)
       .post('/api/persons')
