@@ -3,6 +3,7 @@ const cors = require('cors')
 const morgan = require('morgan')
 
 const Person = require('./models/person')
+const errorHandler = require('./errorHandler')
 
 const app = express()
 
@@ -74,5 +75,12 @@ app.post('/api/persons', async (request, response) => {
   const savedPerson = await person.save()
   return response.json(savedPerson)
 })
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).json({ error: 'unknown endpoint' })
+}
+
+app.use(unknownEndpoint)
+app.use(errorHandler)
 
 module.exports = app

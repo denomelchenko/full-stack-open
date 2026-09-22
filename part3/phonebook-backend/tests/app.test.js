@@ -83,6 +83,30 @@ describe('phonebook backend', () => {
     expect(response.status).toBe(204)
   })
 
+  test('DELETE returns 400 for a malformed id', async () => {
+    const response = await request(app).delete('/api/persons/not-an-object-id')
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('malformed id')
+  })
+
+  test('an unknown endpoint answers with JSON, not HTML', async () => {
+    const response = await request(app).get('/api/nothing-here')
+
+    expect(response.status).toBe(404)
+    expect(response.body.error).toBe('unknown endpoint')
+  })
+
+  test('an unexpected database failure becomes a 500 JSON response', async () => {
+    const loaded = loadApp()
+    loaded.Person.find = () => Promise.reject(new Error('database is gone'))
+
+    const response = await request(loaded.app).get('/api/persons')
+
+    expect(response.status).toBe(500)
+    expect(response.body.error).toBe('something went wrong')
+  })
+
   test('POST creates a person with a generated id', async () => {
     const created = await request(app)
       .post('/api/persons')

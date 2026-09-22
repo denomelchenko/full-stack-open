@@ -66,58 +66,64 @@ const FakePerson = function (input) {
   defineId(this)
 }
 
-FakePerson.find = () => Promise.resolve(people)
+// a test may replace a static to simulate a database failure, so every
+// loadApp() puts the originals back and keeps the tests independent.
+const restoreStatics = () => {
+  FakePerson.find = () => Promise.resolve(people)
 
-FakePerson.countDocuments = () => Promise.resolve(people.length)
+  FakePerson.countDocuments = () => Promise.resolve(people.length)
 
-FakePerson.findById = (id) => {
-  if (isCastError(id)) {
-    return Promise.reject(castError())
+  FakePerson.findById = (id) => {
+    if (isCastError(id)) {
+      return Promise.reject(castError())
+    }
+    const found = people.find((person) => person._id === id)
+    return Promise.resolve(found === undefined ? null : found)
   }
-  const found = people.find((person) => person._id === id)
-  return Promise.resolve(found === undefined ? null : found)
+
+  FakePerson.findByIdAndDelete = (id) => {
+    if (isCastError(id)) {
+      return Promise.reject(castError())
+    }
+    const index = people.findIndex((person) => person._id === id)
+    if (index === -1) {
+      return Promise.resolve(null)
+    }
+    return Promise.resolve(people.splice(index, 1)[0])
+  }
+
+  FakePerson.findByIdAndUpdate = (id, update) => {
+    if (isCastError(id)) {
+      return Promise.reject(castError())
+    }
+    const person = people.find((item) => item._id === id)
+    if (person === undefined) {
+      return Promise.resolve(null)
+    }
+    if (update.name !== undefined) {
+      person.name = update.name
+    }
+    if (update.number !== undefined) {
+      person.number = update.number
+    }
+    return Promise.resolve(person)
+  }
+
+  FakePerson.create = (input) => new FakePerson(input).save()
+
+  FakePerson.exists = (filter) =>
+    Promise.resolve(people.some((person) => person.name === filter.name))
+
+  FakePerson.prototype.save = function () {
+    if (this._id === undefined) {
+      this._id = String(people.length + 1)
+    }
+    people.push(this)
+    return Promise.resolve(this)
+  }
 }
 
-FakePerson.findByIdAndDelete = (id) => {
-  if (isCastError(id)) {
-    return Promise.reject(castError())
-  }
-  const index = people.findIndex((person) => person._id === id)
-  if (index === -1) {
-    return Promise.resolve(null)
-  }
-  return Promise.resolve(people.splice(index, 1)[0])
-}
-
-FakePerson.findByIdAndUpdate = (id, update) => {
-  if (isCastError(id)) {
-    return Promise.reject(castError())
-  }
-  const person = people.find((item) => item._id === id)
-  if (person === undefined) {
-    return Promise.resolve(null)
-  }
-  if (update.name !== undefined) {
-    person.name = update.name
-  }
-  if (update.number !== undefined) {
-    person.number = update.number
-  }
-  return Promise.resolve(person)
-}
-
-FakePerson.create = (input) => new FakePerson(input).save()
-
-FakePerson.exists = (filter) =>
-  Promise.resolve(people.some((person) => person.name === filter.name))
-
-FakePerson.prototype.save = function () {
-  if (this._id === undefined) {
-    this._id = String(people.length + 1)
-  }
-  people.push(this)
-  return Promise.resolve(this)
-}
+restoreStatics()
 
 export const loadApp = () => {
   const appPath = require.resolve('../app')
@@ -127,6 +133,7 @@ export const loadApp = () => {
   delete require.cache[testApiPath]
 
   people = initialPeople()
+  restoreStatics()
 
   require.cache[personModelPath] = {
     id: personModelPath,
