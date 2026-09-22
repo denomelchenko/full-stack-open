@@ -31,4 +31,25 @@ describe('phonebook backend', () => {
     expect(response.text).toContain('<p>Phonebook has info for 4 people</p>')
     expect(response.text).toContain(String(new Date().getFullYear()))
   })
+
+  test('GET /api/persons/:id returns the matching person', async () => {
+    const app = loadApp()
+
+    const response = await request(app).get('/api/persons/1')
+
+    expect(response.status).toBe(200)
+    expect(response.body).toEqual({
+      id: '1',
+      name: 'Arto Hellas',
+      number: '040-123456',
+    })
+  })
+
+  test('GET /api/persons/:id returns 404 for an unknown id', async () => {
+    const app = loadApp()
+
+    const response = await request(app).get('/api/persons/99')
+
+    expect(response.status).toBe(404)
+  })
 })

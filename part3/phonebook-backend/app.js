@@ -25,4 +25,14 @@ app.get('/api/persons', (request, response) => {
   response.json(persons)
 })
 
+app.get('/api/persons/:id', (request, response) => {
+  const person = persons.find((item) => item.id === request.params.id)
+
+  if (person) {
+    response.json(person)
+  } else {
+    response.status(404).end()
+  }
+})
+
 module.exports = app
