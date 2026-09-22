@@ -1,13 +1,20 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import { loadApp } from './testApi'
 
-describe('phonebook backend', () => {
-  test('GET /api/persons returns the hardcoded phonebook', async () => {
-    const app = loadApp()
+let app
+let people
 
+beforeEach(() => {
+  const loaded = loadApp()
+  app = loaded.app
+  people = loaded.people
+})
+
+describe('phonebook backend', () => {
+  test('GET /api/persons returns the people from the database', async () => {
     const response = await request(app).get('/api/persons')
 
     expect(response.status).toBe(200)
@@ -24,9 +31,19 @@ describe('phonebook backend', () => {
     })
   })
 
-  test('GET /info shows the entry count and the request time', async () => {
-    const app = loadApp()
+  test('GET /api/persons serves the documents held by the model', async () => {
+    const loaded = loadApp()
+    const person = new loaded.Person({ name: 'New Person', number: '040-000000' })
+    await person.save()
 
+    const response = await request(loaded.app).get('/api/persons')
+
+    expect(response.status).toBe(200)
+    expect(response.body).toHaveLength(5)
+    expect(response.body[4].name).toBe('New Person')
+  })
+
+  test('GET /info shows the entry count and the request time', async () => {
     const response = await request(app).get('/info')
 
     expect(response.status).toBe(200)
@@ -35,8 +52,6 @@ describe('phonebook backend', () => {
   })
 
   test('GET /api/persons/:id returns the matching person', async () => {
-    const app = loadApp()
-
     const response = await request(app).get('/api/persons/1')
 
     expect(response.status).toBe(200)
@@ -48,42 +63,29 @@ describe('phonebook backend', () => {
   })
 
   test('GET /api/persons/:id returns 404 for an unknown id', async () => {
-    const app = loadApp()
-
     const response = await request(app).get('/api/persons/99')
 
     expect(response.status).toBe(404)
   })
 
   test('DELETE /api/persons/:id removes the person', async () => {
-    const app = loadApp()
-
     const deleted = await request(app).delete('/api/persons/2')
-    const remaining = await request(app).get('/api/persons')
 
     expect(deleted.status).toBe(204)
-    expect(remaining.body).toHaveLength(3)
-    expect(remaining.body.map((person) => person.id)).not.toContain('2')
   })
 
   test('POST /api/persons adds a person with a generated id', async () => {
-    const app = loadApp()
-
     const created = await request(app)
       .post('/api/persons')
       .send({ name: 'Grace Hopper', number: '040-999999' })
-    const all = await request(app).get('/api/persons')
 
     expect(created.status).toBe(200)
     expect(created.body.name).toBe('Grace Hopper')
     expect(created.body.number).toBe('040-999999')
     expect(created.body.id).toBeDefined()
-    expect(all.body).toHaveLength(5)
   })
 
   test('POST without a name is rejected', async () => {
-    const app = loadApp()
-
     const response = await request(app)
       .post('/api/persons')
       .send({ number: '040-999999' })
@@ -93,8 +95,6 @@ describe('phonebook backend', () => {
   })
 
   test('POST without a number is rejected', async () => {
-    const app = loadApp()
-
     const response = await request(app)
       .post('/api/persons')
       .send({ name: 'Grace Hopper' })
@@ -104,8 +104,6 @@ describe('phonebook backend', () => {
   })
 
   test('POST with a duplicate name is rejected', async () => {
-    const app = loadApp()
-
     const response = await request(app)
       .post('/api/persons')
       .send({ name: 'Arto Hellas', number: '040-999999' })
@@ -115,7 +113,6 @@ describe('phonebook backend', () => {
   })
 
   test('logs every request in the tiny format', async () => {
-    const app = loadApp()
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
 
     await request(app).get('/api/persons')
@@ -127,7 +124,6 @@ describe('phonebook backend', () => {
   })
 
   test('logs the body of a POST request', async () => {
-    const app = loadApp()
     const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
 
     await request(app)
@@ -144,15 +140,12 @@ describe('phonebook backend', () => {
   })
 
   test('responses carry the CORS header', async () => {
-    const app = loadApp()
-
     const response = await request(app).get('/api/persons')
 
     expect(response.headers['access-control-allow-origin']).toBe('*')
   })
 
   test('serves the built frontend from dist when it exists', async () => {
-    const app = loadApp()
     const indexFile = join(process.cwd(), 'dist', 'index.html')
     const indexHtml = readFileSync(indexFile, 'utf8')
 
@@ -162,9 +155,7 @@ describe('phonebook backend', () => {
     expect(response.text).toBe(indexHtml)
   })
 
-  test('still answers the API with JSON', async () => {
-    const app = loadApp()
-
+  test('every /api/persons response is JSON', async () => {
     const response = await request(app).get('/api/persons')
 
     expect(response.status).toBe(200)

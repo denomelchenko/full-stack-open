@@ -2,6 +2,8 @@ const express = require('express')
 const cors = require('cors')
 const morgan = require('morgan')
 
+const Person = require('./models/person')
+
 const app = express()
 
 // the production frontend build, served before any route
@@ -31,8 +33,9 @@ app.get('/info', (request, response) => {
   )
 })
 
-app.get('/api/persons', (request, response) => {
-  response.json(persons)
+app.get('/api/persons', async (request, response) => {
+  const people = await Person.find({})
+  response.json(people)
 })
 
 app.get('/api/persons/:id', (request, response) => {
