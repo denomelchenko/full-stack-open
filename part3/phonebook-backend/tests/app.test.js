@@ -51,14 +51,23 @@ describe('phonebook backend', () => {
     expect(response.text).toContain(String(new Date().getFullYear()))
   })
 
-  test('GET /api/persons/:id returns the matching person', async () => {
-    const response = await request(app).get('/api/persons/1')
+  test('GET /info counts the documents in the database', async () => {
+    await request(app).delete('/api/persons/1')
+
+    const response = await request(app).get('/info')
+
+    expect(response.status).toBe(200)
+    expect(response.text).toContain('<p>Phonebook has info for 3 people</p>')
+  })
+
+  test('GET /api/persons/:id returns the person from the database', async () => {
+    const response = await request(app).get('/api/persons/2')
 
     expect(response.status).toBe(200)
     expect(response.body).toEqual({
-      id: '1',
-      name: 'Arto Hellas',
-      number: '040-123456',
+      id: '2',
+      name: 'Ada Lovelace',
+      number: '39-44-5323523',
     })
   })
 
@@ -66,6 +75,13 @@ describe('phonebook backend', () => {
     const response = await request(app).get('/api/persons/99')
 
     expect(response.status).toBe(404)
+  })
+
+  test('GET /api/persons/:id returns 400 for a malformed id', async () => {
+    const response = await request(app).get('/api/persons/not-an-object-id')
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('malformed id')
   })
 
   test('DELETE /api/persons/:id removes the person from the database', async () => {
