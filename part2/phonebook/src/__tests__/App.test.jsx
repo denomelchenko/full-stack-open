@@ -214,4 +214,28 @@ describe('phonebook', () => {
     expect(screen.getByText('Arto Hellas 040-999999')).toBeInTheDocument()
     confirmSpy.mockRestore()
   })
+
+  test('replaces the number of a person that still exists on the server', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    personsService.update.mockResolvedValue({
+      name: 'Arto Hellas',
+      number: '040-777777',
+      id: '1',
+    })
+    const user = userEvent.setup()
+    render(<App />)
+    await screen.findByText('Arto Hellas 040-123456')
+
+    await user.type(screen.getByLabelText('name'), 'Arto Hellas')
+    await user.type(screen.getByLabelText('number'), '040-777777')
+    await user.click(screen.getByRole('button', { name: 'add' }))
+
+    expect(personsService.update).toHaveBeenCalledWith('1', {
+      name: 'Arto Hellas',
+      number: '040-777777',
+      id: '1',
+    })
+    expect(await screen.findByText('Arto Hellas 040-777777')).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
 })

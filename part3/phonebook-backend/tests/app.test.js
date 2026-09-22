@@ -128,6 +128,42 @@ describe('phonebook backend', () => {
     expect(people).toHaveLength(5)
   })
 
+  test('PUT replaces the number of an existing person', async () => {
+    const response = await request(app)
+      .put('/api/persons/1')
+      .send({ name: 'Arto Hellas', number: '040-999999' })
+    const all = await request(app).get('/api/persons')
+
+    expect(response.status).toBe(200)
+    expect(response.body.number).toBe('040-999999')
+    expect(all.body[0].number).toBe('040-999999')
+  })
+
+  test('PUT returns 404 for an unknown id', async () => {
+    const response = await request(app)
+      .put('/api/persons/999')
+      .send({ name: 'Nobody', number: '040-000000' })
+
+    expect(response.status).toBe(404)
+  })
+
+  test('PUT returns 400 for a malformed id', async () => {
+    const response = await request(app)
+      .put('/api/persons/not-an-object-id')
+      .send({ name: 'Nobody', number: '040-000000' })
+
+    expect(response.status).toBe(400)
+  })
+
+  test('PUT without a name or number is rejected', async () => {
+    const response = await request(app)
+      .put('/api/persons/1')
+      .send({ number: '040-999999' })
+
+    expect(response.status).toBe(400)
+    expect(response.body.error).toBe('name and number are required')
+  })
+
   test('POST without a name is rejected', async () => {
     const response = await request(app)
       .post('/api/persons')

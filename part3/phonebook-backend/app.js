@@ -76,6 +76,26 @@ app.post('/api/persons', async (request, response) => {
   return response.json(savedPerson)
 })
 
+app.put('/api/persons/:id', async (request, response) => {
+  const body = request.body
+
+  if (!body.name || !body.number) {
+    return response.status(400).json({ error: 'name and number are required' })
+  }
+
+  const updatedPerson = await Person.findByIdAndUpdate(
+    request.params.id,
+    { name: body.name, number: body.number },
+    { new: true, runValidators: true, context: 'query' }
+  )
+
+  if (updatedPerson) {
+    return response.json(updatedPerson)
+  }
+
+  return response.status(404).end()
+})
+
 const unknownEndpoint = (request, response) => {
   response.status(404).json({ error: 'unknown endpoint' })
 }
