@@ -4,6 +4,9 @@ const morgan = require('morgan')
 
 const app = express()
 
+// the production frontend build, served before any route
+app.use(express.static('dist'))
+
 app.use(express.json())
 app.use(cors())
 morgan.token('body', (request) => JSON.stringify(request.body))

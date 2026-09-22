@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import { loadApp } from './testApi'
@@ -147,5 +149,25 @@ describe('phonebook backend', () => {
     const response = await request(app).get('/api/persons')
 
     expect(response.headers['access-control-allow-origin']).toBe('*')
+  })
+
+  test('serves the built frontend from dist when it exists', async () => {
+    const app = loadApp()
+    const indexFile = join(process.cwd(), 'dist', 'index.html')
+    const indexHtml = readFileSync(indexFile, 'utf8')
+
+    const response = await request(app).get('/')
+
+    expect(response.status).toBe(200)
+    expect(response.text).toBe(indexHtml)
+  })
+
+  test('still answers the API with JSON', async () => {
+    const app = loadApp()
+
+    const response = await request(app).get('/api/persons')
+
+    expect(response.status).toBe(200)
+    expect(response.headers['content-type']).toContain('application/json')
   })
 })

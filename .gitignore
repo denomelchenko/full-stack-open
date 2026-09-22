@@ -36,3 +36,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# the part 3 backend serves its dist build in production, so it is committed
+!part3/phonebook-backend/dist/
