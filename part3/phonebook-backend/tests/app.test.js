@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import request from 'supertest'
 import { loadApp } from './testApi'
 
@@ -111,4 +111,17 @@ describe('phonebook backend', () => {
     expect(response.status).toBe(400)
     expect(response.body.error).toBe('name must be unique')
   })
+
+  test('logs every request in the tiny format', async () => {
+    const app = loadApp()
+    const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+
+    await request(app).get('/api/persons')
+    await new Promise((resolve) => setTimeout(resolve, 20))
+
+    const logged = write.mock.calls.map((call) => String(call[0])).join('')
+    expect(logged).toContain('GET /api/persons 200')
+    write.mockRestore()
+  })
+
 })
